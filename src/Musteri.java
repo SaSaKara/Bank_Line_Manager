@@ -20,7 +20,7 @@ public class Musteri {
     // Ekrana yazdırırken sayı yerine isim yazsın diye küçük bir yardımcı metot
     public String getOncelikTipi() {
         switch (this.oncelikSeviyesi) {
-            case 1: return "VIP";
+            case 1: return "Öncelikli"; // VIP yerine Öncelikli
             case 2: return "Engelli";
             case 3: return "Yaşlı";
             case 4: return "Standart";

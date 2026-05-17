@@ -61,4 +61,7 @@ public class OncelikliKuyruk {
         }
         System.out.println("null");
     }
+    public Musteri getHead() {
+        return this.head;
+    }
 }
