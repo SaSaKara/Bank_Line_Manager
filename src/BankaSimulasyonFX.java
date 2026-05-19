@@ -28,6 +28,9 @@ public class BankaSimulasyonFX extends Application {
     private final int SIMULASYON_SURESI = 60;
     private boolean simulasayonBasladi = false;
 
+    // Simülasyon hızı tekrar başlatmada korunabilsin diye
+    private double simulasayonHizi = 1.0;
+
     // Arayüz Bileşenleri
     private HBox kuyrukListesiPanel;
     private VBox[] giseKutulari;
@@ -164,7 +167,10 @@ public class BankaSimulasyonFX extends Application {
         hizKaydirici.setBlockIncrement(0.1);
         hizKaydirici.valueProperty().addListener((obs, oldVal, newVal) -> {
             double rate = newVal.doubleValue();
-            timeline.setRate(rate);
+            simulasayonHizi = rate; // Hız değerini tekrar başlatmada korumak için
+            if (timeline != null) {
+                timeline.setRate(rate);
+            }
             hizBaslik.setText(String.format("Simülasyon Hızı: %.1fx", rate));
         });
 
@@ -178,6 +184,7 @@ public class BankaSimulasyonFX extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
 
+        // İlk Timeline nesnesi oluşturuluyor
         timeline = new Timeline(new KeyFrame(Duration.millis(1000), e -> handleTimeStep()));
         timeline.setCycleCount(SIMULASYON_SURESI);
     }
@@ -193,6 +200,16 @@ public class BankaSimulasyonFX extends Application {
     }
 
     private void startSimulation() {
+        // Tekrar başlatmada eski Timeline kalmasın diye durduruyoruz
+        if (timeline != null) {
+            timeline.stop();
+        }
+
+        // Her yeni simülasyonda Timeline yeniden oluşturuluyor
+        timeline = new Timeline(new KeyFrame(Duration.millis(1000), e -> handleTimeStep()));
+        timeline.setCycleCount(SIMULASYON_SURESI);
+        timeline.setRate(simulasayonHizi);
+
         initBackendSystems();
         dakika = 0;
         musteriSayaci = 1;
@@ -210,6 +227,7 @@ public class BankaSimulasyonFX extends Application {
             giseKutulari[i].setStyle("-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #E2E8F0; -fx-border-width: 1; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);");
         }
         timeline.play();
+        kuyrukArayuzunuCiz();
     }
 
     private void handleTimeStep() {
@@ -249,7 +267,9 @@ public class BankaSimulasyonFX extends Application {
 
         for (int i = 0; i < 3; i++) {
             giseler[i].zamanIlerlet();
-            if (!giseler[i].musaitMi) {
+
+            // Gişede müşteri varsa kalan süreyi güvenli şekilde güncelle
+            if (!giseler[i].musaitMi && giseler[i].suankiMusteri != null) {
                 giseMusteriEtiketleri[i].setText("Müşteri: M" + giseler[i].suankiMusteri.id + " (" + giseler[i].suankiMusteri.getOncelikTipi() + ")\nKalan: " + giseler[i].kalanIslemSuresi + " dk");
             } else {
                 giseDurumEtiketleri[i].setText("MÜSAİT");
@@ -263,8 +283,15 @@ public class BankaSimulasyonFX extends Application {
 
         if (dakika == SIMULASYON_SURESI) {
             simulasayonBasladi = false;
-            logEkle("--- Simülasyon Bitti! Konsola Rapor Yazdırılıyor ---");
-            istatistik.raporuYazdir();
+
+            // Simülasyon bittiğinde kuyrukta kalan müşteri sayısı rapora ekleniyor
+            int kalanMusteri = bankaSira.kalanMusteriSayisi();
+
+            logEkle("--- Simülasyon Bitti! Rapor oluşturuluyor ---");
+
+            // Rapor artık sadece konsola değil, GUI içindeki log ekranına da yazılıyor
+            logEkle(istatistik.raporMetniOlustur(kalanMusteri));
+
             baslatButonu.setText("Tekrar Başlat");
             baslatButonu.setStyle("-fx-background-color: linear-gradient(to right, #3182CE, #2B6CB0); -fx-text-fill: white; -fx-background-radius: 8; -fx-cursor: hand;");
         }
@@ -273,6 +300,16 @@ public class BankaSimulasyonFX extends Application {
     private void kuyrukArayuzunuCiz() {
         kuyrukListesiPanel.getChildren().clear();
         Musteri current = bankaSira.getHead();
+
+        // Kuyruk boşsa ekranda boş görünmesin diye bilgi mesajı gösteriliyor
+        if (current == null) {
+            Label bosLabel = new Label("Kuyrukta bekleyen müşteri yok.");
+            bosLabel.setFont(Font.font("Segoe UI", 14));
+            bosLabel.setTextFill(Color.GRAY);
+            kuyrukListesiPanel.getChildren().add(bosLabel);
+            return;
+        }
+
         boolean isFirst = true;
 
         while (current != null) {

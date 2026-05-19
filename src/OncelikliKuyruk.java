@@ -61,7 +61,21 @@ public class OncelikliKuyruk {
         }
         System.out.println("null");
     }
+
     public Musteri getHead() {
         return this.head;
+    }
+
+    // Program bitişinde kuyrukta hala kalan müşterileri saymak için
+    public int kalanMusteriSayisi() {
+        int sayac = 0;
+        Musteri current = head;
+
+        while (current != null) {
+            sayac++;
+            current = current.next;
+        }
+
+        return sayac;
     }
 }
