@@ -1,4 +1,3 @@
-import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -26,10 +25,9 @@ public class BankaSimulasyonFX extends Application {
     private int musteriSayaci = 1;
     private Timeline timeline;
     private final int SIMULASYON_SURESI = 60;
-    private boolean simulasayonBasladi = false;
 
     // Arayüz Bileşenleri
-    private HBox kuyrukListesiPanel;
+    private VBox kuyrukListesiPanel;
     private VBox[] giseKutulari;
     private Label[] giseDurumEtiketleri;
     private Label[] giseMusteriEtiketleri;
@@ -95,17 +93,13 @@ public class BankaSimulasyonFX extends Application {
         kuyrukTitle.setTextFill(Color.web("#2D3748"));
 
         ScrollPane kuyrukScroll = new ScrollPane();
-        kuyrukListesiPanel = new HBox(12);
-        kuyrukListesiPanel.setAlignment(Pos.CENTER_LEFT);
+        kuyrukListesiPanel = new VBox(8);
         kuyrukListesiPanel.setPadding(new Insets(10));
         kuyrukListesiPanel.setStyle("-fx-background-color: white;");
 
         kuyrukScroll.setContent(kuyrukListesiPanel);
-        kuyrukScroll.setFitToHeight(true);
-        kuyrukScroll.setFitToWidth(false);
-        kuyrukScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        kuyrukScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        kuyrukScroll.setPrefHeight(120);
+        kuyrukScroll.setFitToWidth(true);
+        kuyrukScroll.setPrefHeight(250);
         // ScrollPane için modern çerçeve
         kuyrukScroll.setStyle("-fx-background-color: transparent; -fx-background: white; -fx-border-color: #E2E8F0; -fx-border-width: 2; -fx-border-radius: 10; -fx-background-radius: 10;");
 
@@ -129,9 +123,9 @@ public class BankaSimulasyonFX extends Application {
         logEkrani.setStyle("-fx-control-inner-background: #1A202C; -fx-text-fill: #48BB78; -fx-font-family: 'Consolas'; -fx-font-size: 13px; -fx-background-radius: 8;");
         logVBox.getChildren().addAll(logTitle, logEkrani);
 
-        VBox kontrolVBox = new VBox(15);
+        VBox kontrolVBox = new VBox(20);
         kontrolVBox.setAlignment(Pos.CENTER);
-        kontrolVBox.setPrefWidth(220);
+        kontrolVBox.setPrefWidth(200);
 
         zamanEtiketi = new Label("Dakika: 0");
         zamanEtiketi.setFont(Font.font("Segoe UI", FontWeight.EXTRA_BOLD, 24));
@@ -140,40 +134,17 @@ public class BankaSimulasyonFX extends Application {
         baslatButonu = new Button("Simülasyonu Başlat");
         baslatButonu.setFont(Font.font("Segoe UI", FontWeight.BOLD, 16));
         baslatButonu.setPrefWidth(200);
-        baslatButonu.setPrefHeight(40);
+        baslatButonu.setPrefHeight(45);
         // Modern gradient buton
         baslatButonu.setStyle("-fx-background-color: linear-gradient(to right, #3182CE, #2B6CB0); -fx-text-fill: white; -fx-background-radius: 8; -fx-cursor: hand;");
-        baslatButonu.setOnAction(e -> handleStartPause());
+        baslatButonu.setOnAction(e -> startSimulation());
 
-        Button musteriEkleButonu = new Button("Yeni Müşteri Ekle");
-        musteriEkleButonu.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
-        musteriEkleButonu.setPrefWidth(200);
-        musteriEkleButonu.setPrefHeight(35);
-        musteriEkleButonu.setStyle("-fx-background-color: linear-gradient(to right, #48BB78, #38A169); -fx-text-fill: white; -fx-background-radius: 8; -fx-cursor: hand;");
-        musteriEkleButonu.setOnAction(e -> openAddCustomerDialog());
-
-        Label hizBaslik = new Label("Simülasyon Hızı: 1.0x");
-        hizBaslik.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
-        hizBaslik.setTextFill(Color.web("#4A5568"));
-
-        Slider hizKaydirici = new Slider(0.2, 3.0, 1.0);
-        hizKaydirici.setPrefWidth(180);
-        hizKaydirici.setShowTickMarks(true);
-        hizKaydirici.setShowTickLabels(true);
-        hizKaydirici.setMajorTickUnit(1.0);
-        hizKaydirici.setBlockIncrement(0.1);
-        hizKaydirici.valueProperty().addListener((obs, oldVal, newVal) -> {
-            double rate = newVal.doubleValue();
-            timeline.setRate(rate);
-            hizBaslik.setText(String.format("Simülasyon Hızı: %.1fx", rate));
-        });
-
-        kontrolVBox.getChildren().addAll(zamanEtiketi, baslatButonu, musteriEkleButonu, hizBaslik, hizKaydirici);
+        kontrolVBox.getChildren().addAll(zamanEtiketi, baslatButonu);
 
         altPanel.getChildren().addAll(logVBox, kontrolVBox);
         anaRoot.setBottom(altPanel);
 
-        Scene scene = new Scene(anaRoot, 950, 750);
+        Scene scene = new Scene(anaRoot, 900, 750);
         primaryStage.setTitle("Grup 10 - Banka Kuyruk Yönetimi");
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -193,14 +164,18 @@ public class BankaSimulasyonFX extends Application {
     }
 
     private void startSimulation() {
+
+        if (timeline != null) {
+            timeline.stop();
+        }
+
         initBackendSystems();
         dakika = 0;
         musteriSayaci = 1;
-        simulasayonBasladi = true;
         logEkrani.setText("");
         kuyrukListesiPanel.getChildren().clear();
-        baslatButonu.setText("Duraklat");
-        baslatButonu.setStyle("-fx-background-color: linear-gradient(to right, #E53E3E, #C53030); -fx-text-fill: white; -fx-background-radius: 8; -fx-cursor: hand;");
+        baslatButonu.setDisable(true);
+        baslatButonu.setText("Çalışıyor...");
         logEkle("Simülasyon başlatılıyor...");
 
         for(int i=0; i<3; i++) {
@@ -250,7 +225,9 @@ public class BankaSimulasyonFX extends Application {
         for (int i = 0; i < 3; i++) {
             giseler[i].zamanIlerlet();
             if (!giseler[i].musaitMi) {
-                giseMusteriEtiketleri[i].setText("Müşteri: M" + giseler[i].suankiMusteri.id + " (" + giseler[i].suankiMusteri.getOncelikTipi() + ")\nKalan: " + giseler[i].kalanIslemSuresi + " dk");
+                if (!giseler[i].musaitMi && giseler[i].suankiMusteri != null) {
+                    giseMusteriEtiketleri[i].setText("Müşteri: M" + giseler[i].suankiMusteri.id + " (" + giseler[i].suankiMusteri.getOncelikTipi() + ")\nKalan: " + giseler[i].kalanIslemSuresi + " dk");
+                }
             } else {
                 giseDurumEtiketleri[i].setText("MÜSAİT");
                 giseDurumEtiketleri[i].setTextFill(Color.web("#38A169"));
@@ -262,33 +239,31 @@ public class BankaSimulasyonFX extends Application {
         kuyrukArayuzunuCiz();
 
         if (dakika == SIMULASYON_SURESI) {
-            simulasayonBasladi = false;
-            logEkle("--- Simülasyon Bitti! Konsola Rapor Yazdırılıyor ---");
-            istatistik.raporuYazdir();
+            int kalanMusteri = bankaSira.kalanMusteriSayisi();
+
+            logEkle("--- Simülasyon Bitti! Rapor oluşturuluyor ---");
+            logEkle(istatistik.raporMetniOlustur(kalanMusteri));
+
+            baslatButonu.setDisable(false);
             baslatButonu.setText("Tekrar Başlat");
-            baslatButonu.setStyle("-fx-background-color: linear-gradient(to right, #3182CE, #2B6CB0); -fx-text-fill: white; -fx-background-radius: 8; -fx-cursor: hand;");
         }
     }
 
     private void kuyrukArayuzunuCiz() {
         kuyrukListesiPanel.getChildren().clear();
         Musteri current = bankaSira.getHead();
-        boolean isFirst = true;
+        if (current == null) {
+            Label bosLabel = new Label("Kuyrukta bekleyen müşteri yok.");
+            bosLabel.setFont(Font.font("Segoe UI", 14));
+            bosLabel.setTextFill(Color.GRAY);
+            kuyrukListesiPanel.getChildren().add(bosLabel);
+            return;
+        }
 
         while (current != null) {
-            if (!isFirst) {
-                Label okLabel = new Label("←");
-                okLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
-                okLabel.setTextFill(Color.web("#718096"));
-                okLabel.setAlignment(Pos.CENTER);
-                kuyrukListesiPanel.getChildren().add(okLabel);
-            }
-            isFirst = false;
-
-            HBox musteriKutusu = new HBox(8);
-            musteriKutusu.setAlignment(Pos.CENTER);
-            musteriKutusu.setPadding(new Insets(8, 12, 8, 12));
-            musteriKutusu.setPrefHeight(60);
+            HBox musteriKutusu = new HBox(15);
+            musteriKutusu.setAlignment(Pos.CENTER_LEFT);
+            musteriKutusu.setPadding(new Insets(8, 15, 8, 15));
 
             String style = "";
             switch (current.oncelikSeviyesi) {
@@ -298,99 +273,21 @@ public class BankaSimulasyonFX extends Application {
                 case 4: style = "-fx-background-color: #EDF2F7; -fx-text-fill: #2D3748;"; break; // Standart (Gri)
             }
 
-            musteriKutusu.setStyle(style + " -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);");
+            musteriKutusu.setStyle(style + " -fx-background-radius: 8;");
 
             Label idLabel = new Label("M" + current.id);
-            idLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
+            idLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 15));
             if(current.oncelikSeviyesi != 4) idLabel.setTextFill(Color.WHITE);
 
             Label typeLabel = new Label(current.getOncelikTipi());
-            typeLabel.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 12));
+            typeLabel.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 14));
             if(current.oncelikSeviyesi != 4) typeLabel.setTextFill(Color.WHITE);
 
-            Label sureLabel = new Label("(" + current.islemSuresi + " dk)");
-            sureLabel.setFont(Font.font("Segoe UI", FontWeight.LIGHT, 11));
-            if(current.oncelikSeviyesi != 4) sureLabel.setTextFill(Color.WHITE);
-            else sureLabel.setTextFill(Color.web("#718096"));
-
-            musteriKutusu.getChildren().addAll(idLabel, typeLabel, sureLabel);
+            musteriKutusu.getChildren().addAll(idLabel, typeLabel);
             kuyrukListesiPanel.getChildren().add(musteriKutusu);
 
             current = current.next;
         }
-    }
-
-    private void handleStartPause() {
-        if (timeline.getStatus() == Animation.Status.STOPPED || dakika == SIMULASYON_SURESI) {
-            startSimulation();
-        } else if (timeline.getStatus() == Animation.Status.RUNNING) {
-            timeline.pause();
-            baslatButonu.setText("Devam Et");
-            baslatButonu.setStyle("-fx-background-color: linear-gradient(to right, #ED8936, #DD6B20); -fx-text-fill: white; -fx-background-radius: 8; -fx-cursor: hand;");
-            logEkle("Simülasyon duraklatıldı.");
-        } else {
-            timeline.play();
-            baslatButonu.setText("Duraklat");
-            baslatButonu.setStyle("-fx-background-color: linear-gradient(to right, #E53E3E, #C53030); -fx-text-fill: white; -fx-background-radius: 8; -fx-cursor: hand;");
-            logEkle("Simülasyon devam ediyor...");
-        }
-    }
-
-    private void openAddCustomerDialog() {
-        if (!simulasayonBasladi) {
-            Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setTitle("Uyarı");
-            alert.setHeaderText(null);
-            alert.setContentText("Lütfen önce simülasyonu başlatın!");
-            alert.showAndWait();
-            return;
-        }
-
-        Dialog<Musteri> dialog = new Dialog<>();
-        dialog.setTitle("Yeni Müşteri Ekle");
-        dialog.setHeaderText("Müşterinin özelliklerini belirleyin:");
-
-        ButtonType ekleButtonType = new ButtonType("Kuyruğa Ekle", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(ekleButtonType, ButtonType.CANCEL);
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20, 50, 10, 10));
-
-        ComboBox<String> oncelikCombo = new ComboBox<>();
-        oncelikCombo.getItems().addAll("Öncelikli (VIP)", "Engelli", "Yaşlı", "Standart");
-        oncelikCombo.setValue("Standart");
-
-        Spinner<Integer> sureSpinner = new Spinner<>(1, 20, 5);
-
-        grid.add(new Label("Öncelik Tipi:"), 0, 0);
-        grid.add(oncelikCombo, 1, 0);
-        grid.add(new Label("İşlem Süresi (Dk):"), 0, 1);
-        grid.add(sureSpinner, 1, 1);
-
-        dialog.getDialogPane().setContent(grid);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == ekleButtonType) {
-                int oncelik = 4;
-                switch (oncelikCombo.getValue()) {
-                    case "Öncelikli (VIP)": oncelik = 1; break;
-                    case "Engelli": oncelik = 2; break;
-                    case "Yaşlı": oncelik = 3; break;
-                    case "Standart": oncelik = 4; break;
-                }
-                int islemSuresi = sureSpinner.getValue();
-                return new Musteri(musteriSayaci++, oncelik, islemSuresi, dakika);
-            }
-            return null;
-        });
-
-        dialog.showAndWait().ifPresent(yeniMusteri -> {
-            bankaSira.kuyrugaEkle(yeniMusteri);
-            logEkle(">> [MANUEL EKLEME] İçeri girdi: M" + yeniMusteri.id + " (" + yeniMusteri.getOncelikTipi() + ", İşlem Süresi: " + yeniMusteri.islemSuresi + " dk)");
-            kuyrukArayuzunuCiz();
-        });
     }
 
     private void logEkle(String mesaj) {

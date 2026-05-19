@@ -58,4 +58,53 @@ public class IstatistikYonetici {
 
         System.out.println("==================================================\n");
     }
+
+    //uygulama içi rapor gösterme
+    public String raporMetniOlustur(int kuyruktaKalanMusteri) {
+        StringBuilder rapor = new StringBuilder();
+
+        rapor.append("\n===== GÜN SONU İSTATİSTİK RAPORU =====\n");
+        rapor.append("Toplam Hizmet Verilen Müşteri: ").append(toplamMusteri).append("\n");
+        rapor.append("Kuyrukta Kalan Müşteri: ").append(kuyruktaKalanMusteri).append("\n");
+
+        if (toplamMusteri > 0) {
+            double genelOrtalama = (double) toplamBeklemeSuresi / toplamMusteri;
+            rapor.append("Genel Ortalama Bekleme Süresi: ")
+                    .append(String.format("%.2f", genelOrtalama))
+                    .append(" dk\n");
+        }
+
+        rapor.append("\n--- Detaylı Analiz ---\n");
+
+        if (vipSayisi > 0) {
+            rapor.append("Öncelikli Müşteri: ").append(vipSayisi)
+                    .append(" kişi | Ort. Bekleme: ")
+                    .append(String.format("%.2f", (double) vipBekleme / vipSayisi))
+                    .append(" dk\n");
+        }
+
+        if (engelliSayisi > 0) {
+            rapor.append("Engelli Müşteri: ").append(engelliSayisi)
+                    .append(" kişi | Ort. Bekleme: ")
+                    .append(String.format("%.2f", (double) engelliBekleme / engelliSayisi))
+                    .append(" dk\n");
+        }
+
+        if (yasliSayisi > 0) {
+            rapor.append("Yaşlı Müşteri: ").append(yasliSayisi)
+                    .append(" kişi | Ort. Bekleme: ")
+                    .append(String.format("%.2f", (double) yasliBekleme / yasliSayisi))
+                    .append(" dk\n");
+        }
+
+        if (standartSayisi > 0) {
+            rapor.append("Standart Müşteri: ").append(standartSayisi)
+                    .append(" kişi | Ort. Bekleme: ")
+                    .append(String.format("%.2f", (double) standartBekleme / standartSayisi))
+                    .append(" dk\n");
+        }
+
+
+        return rapor.toString();
+    }
 }

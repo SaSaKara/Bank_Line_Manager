@@ -64,4 +64,17 @@ public class OncelikliKuyruk {
     public Musteri getHead() {
         return this.head;
     }
+
+    //program bitişşi hala kalan müşterileri tutmak için
+    public int kalanMusteriSayisi() {
+        int sayac = 0;
+        Musteri current = head;
+
+        while (current != null) {
+            sayac++;
+            current = current.next;
+        }
+
+        return sayac;
+    }
 }
